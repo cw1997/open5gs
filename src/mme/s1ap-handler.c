@@ -1914,64 +1914,75 @@ void s1ap_handle_path_switch_request(
     ogs_kdf_nh_enb(mme_ue->kasme, mme_ue->nh, mme_ue->nh);
 
     relocation = sgw_ue_check_if_relocated(mme_ue);
-    ogs_fatal("sgw_ue = %d", relocation);
+    if (relocation == SGW_WITHOUT_RELOCATION) {
+        for (i = 0; i < E_RABToBeSwitchedDLList->list.count; i++) {
+            S1AP_E_RABToBeSwitchedDLItemIEs_t *item = NULL;
+            S1AP_E_RABToBeSwitchedDLItem_t *e_rab = NULL;
 
-    for (i = 0; i < E_RABToBeSwitchedDLList->list.count; i++) {
-        S1AP_E_RABToBeSwitchedDLItemIEs_t *item = NULL;
-        S1AP_E_RABToBeSwitchedDLItem_t *e_rab = NULL;
+            mme_bearer_t *bearer = NULL;
 
-        mme_bearer_t *bearer = NULL;
+            item = (S1AP_E_RABToBeSwitchedDLItemIEs_t *)
+                E_RABToBeSwitchedDLList->list.array[i];
+            if (!item) {
+                ogs_error("No S1AP_E_RABToBeSwitchedDLItemIEs_t");
+                ogs_assert(OGS_OK ==
+                    s1ap_send_error_indication2(mme_ue,
+                    S1AP_Cause_PR_protocol, S1AP_CauseProtocol_semantic_error));
+                return;
+            }
 
-        item = (S1AP_E_RABToBeSwitchedDLItemIEs_t *)
-            E_RABToBeSwitchedDLList->list.array[i];
-        if (!item) {
-            ogs_error("No S1AP_E_RABToBeSwitchedDLItemIEs_t");
+            e_rab = &item->value.choice.E_RABToBeSwitchedDLItem;
+            if (!e_rab) {
+                ogs_error("No E_RABToBeSwitchedDLItem");
+                ogs_assert(OGS_OK ==
+                    s1ap_send_error_indication2(mme_ue,
+                    S1AP_Cause_PR_protocol, S1AP_CauseProtocol_semantic_error));
+                return;
+            }
+
+            bearer = mme_bearer_find_by_ue_ebi(mme_ue, e_rab->e_RAB_ID);
+            if (!bearer) {
+                ogs_error("No Bearer [%d]", (int)e_rab->e_RAB_ID);
+                ogs_assert(OGS_OK ==
+                    s1ap_send_error_indication2(mme_ue,
+                        S1AP_Cause_PR_radioNetwork,
+                        S1AP_CauseRadioNetwork_unknown_E_RAB_ID));
+                return;
+            }
+
+            memcpy(&bearer->enb_s1u_teid, e_rab->gTP_TEID.buf,
+                    sizeof(bearer->enb_s1u_teid));
+            bearer->enb_s1u_teid = be32toh(bearer->enb_s1u_teid);
+            rv = ogs_asn_BIT_STRING_to_ip(
+                    &e_rab->transportLayerAddress, &bearer->enb_s1u_ip);
+            if (rv != OGS_OK) {
+                ogs_error("No transportLayerAddress [%d]",
+                        (int)e_rab->e_RAB_ID);
+                ogs_assert(OGS_OK ==
+                    s1ap_send_error_indication2(mme_ue,
+                        S1AP_Cause_PR_protocol,
+                        S1AP_CauseProtocol_abstract_syntax_error_falsely_constructed_message));
+                return;
+            }
+
+            GTP_COUNTER_INCREMENT(
+                    mme_ue, GTP_COUNTER_MODIFY_BEARER_BY_PATH_SWITCH);
+
             ogs_assert(OGS_OK ==
-                s1ap_send_error_indication2(mme_ue,
-                S1AP_Cause_PR_protocol, S1AP_CauseProtocol_semantic_error));
-            return;
+                mme_gtp_send_modify_bearer_request(bearer, 1));
         }
+    } else if (relocation == SGW_WITH_RELOCATION) {
+        mme_sess_t *sess = NULL;
 
-        e_rab = &item->value.choice.E_RABToBeSwitchedDLItem;
-        if (!e_rab) {
-            ogs_error("No E_RABToBeSwitchedDLItem");
+        ogs_list_for_each(&mme_ue->sess_list, sess) {
             ogs_assert(OGS_OK ==
-                s1ap_send_error_indication2(mme_ue,
-                S1AP_Cause_PR_protocol, S1AP_CauseProtocol_semantic_error));
-            return;
+                mme_gtp_send_create_session_request(
+                    sess, OGS_GTP_CREATE_IN_PATH_SWITCH_REQUEST));
         }
-
-        bearer = mme_bearer_find_by_ue_ebi(mme_ue, e_rab->e_RAB_ID);
-        if (!bearer) {
-            ogs_error("No Bearer [%d]", (int)e_rab->e_RAB_ID);
-            ogs_assert(OGS_OK ==
-                s1ap_send_error_indication2(mme_ue,
-                    S1AP_Cause_PR_radioNetwork,
-                    S1AP_CauseRadioNetwork_unknown_E_RAB_ID));
-            return;
-        }
-
-        memcpy(&bearer->enb_s1u_teid, e_rab->gTP_TEID.buf,
-                sizeof(bearer->enb_s1u_teid));
-        bearer->enb_s1u_teid = be32toh(bearer->enb_s1u_teid);
-        rv = ogs_asn_BIT_STRING_to_ip(
-                &e_rab->transportLayerAddress, &bearer->enb_s1u_ip);
-        if (rv != OGS_OK) {
-            ogs_error("No transportLayerAddress [%d]",
-                    (int)e_rab->e_RAB_ID);
-            ogs_assert(OGS_OK ==
-                s1ap_send_error_indication2(mme_ue,
-                    S1AP_Cause_PR_protocol,
-                    S1AP_CauseProtocol_abstract_syntax_error_falsely_constructed_message));
-            return;
-        }
-
-        GTP_COUNTER_INCREMENT(
-                mme_ue, GTP_COUNTER_MODIFY_BEARER_BY_PATH_SWITCH);
-
-        ogs_assert(OGS_OK ==
-            mme_gtp_send_modify_bearer_request(bearer, 1));
+    } else if (relocation == SGW_HAS_ALREADY_BEEN_RELOCATED) {
+        ogs_error("SGW has already been relocated");
     }
+
 }
 
 void s1ap_handle_enb_configuration_transfer(

@@ -206,12 +206,21 @@ int mme_gtp_send_create_session_request(mme_sess_t *sess, int create_action)
     ogs_pkbuf_t *pkbuf = NULL;
     ogs_gtp_xact_t *xact = NULL;
     mme_ue_t *mme_ue = NULL;
+    sgw_ue_t *source_ue = NULL;
     sgw_ue_t *sgw_ue = NULL;
 
     mme_ue = sess->mme_ue;
     ogs_assert(mme_ue);
-    sgw_ue = mme_ue->sgw_ue;
-    ogs_assert(sgw_ue);
+
+    if (create_action == OGS_GTP_CREATE_IN_PATH_SWITCH_REQUEST) {
+        source_ue = sgw_ue_cycle(mme_ue->sgw_ue);
+        ogs_assert(source_ue);
+        sgw_ue = sgw_ue_cycle(source_ue->target_ue);
+        ogs_assert(sgw_ue);
+    } else {
+        sgw_ue = sgw_ue_cycle(mme_ue->sgw_ue);
+        ogs_assert(sgw_ue);
+    }
 
     memset(&h, 0, sizeof(ogs_gtp2_header_t));
     h.type = OGS_GTP2_CREATE_SESSION_REQUEST_TYPE;
