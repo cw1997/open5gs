@@ -59,6 +59,10 @@ static void stats_remove_enb_ue(void);
 static void stats_add_mme_session(void);
 static void stats_remove_mme_session(void);
 
+static bool compare_ue_info(mme_sgw_t *node, enb_ue_t *enb_ue);
+static mme_sgw_t *selected_sgw_node(mme_sgw_t *current, enb_ue_t *enb_ue);
+static mme_sgw_t *changed_sgw_node(mme_sgw_t *current, enb_ue_t *enb_ue);
+
 void mme_context_init()
 {
     ogs_assert(context_initialized == 0);
@@ -2098,6 +2102,38 @@ sgw_ue_t *sgw_ue_cycle(sgw_ue_t *sgw_ue)
     return ogs_pool_cycle(&sgw_ue_pool, sgw_ue);
 }
 
+sgw_relocation_e sgw_ue_check_if_relocated(mme_ue_t *mme_ue)
+{
+    enb_ue_t *enb_ue = NULL;
+    sgw_ue_t *source_ue, *target_ue = NULL;
+    mme_sgw_t *current = NULL, *changed = NULL;
+
+    ogs_assert(mme_ue);
+    enb_ue = enb_ue_cycle(mme_ue->enb_ue);
+    ogs_assert(enb_ue);
+    source_ue = sgw_ue_cycle(mme_ue->sgw_ue);
+    ogs_assert(source_ue);
+
+    current = source_ue->sgw;
+    ogs_assert(current);
+
+    changed = changed_sgw_node(current, enb_ue);
+    if (!changed) return SGW_WITHOUT_RELOCATION;
+
+    target_ue = sgw_ue_cycle(source_ue->target_ue);
+    if (target_ue) {
+        ogs_error("SGW-UE source has already been associated with target");
+        return SGW_HAS_ALREADY_BEEN_RELOCATED;
+    }
+
+    target_ue = sgw_ue_add(changed);
+    ogs_assert(target_ue);
+
+    sgw_ue_source_associate_target(source_ue, target_ue);
+
+    return SGW_WITH_RELOCATION;
+}
+
 void mme_ue_new_guti(mme_ue_t *mme_ue)
 {
     served_gummei_t *served_gummei = NULL;
@@ -2190,7 +2226,7 @@ static mme_sgw_t *selected_sgw_node(mme_sgw_t *current, enb_ue_t *enb_ue)
     return next ? next : ogs_list_first(&mme_self()->sgw_list);
 }
 
-mme_sgw_t *mme_changed_sgw_node(mme_sgw_t *current, enb_ue_t *enb_ue)
+static mme_sgw_t *changed_sgw_node(mme_sgw_t *current, enb_ue_t *enb_ue)
 {
     mme_sgw_t *changed = NULL;
 

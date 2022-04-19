@@ -731,6 +731,13 @@ sgw_ue_t *sgw_ue_find(uint32_t index);
 sgw_ue_t *sgw_ue_find_by_mme_s11_teid(uint32_t mme_s11_teid);
 sgw_ue_t *sgw_ue_cycle(sgw_ue_t *sgw_ue);
 
+typedef enum {
+    SGW_WITHOUT_RELOCATION = 1,
+    SGW_WITH_RELOCATION = 2,
+    SGW_HAS_ALREADY_BEEN_RELOCATED = 3,
+} sgw_relocation_e;
+sgw_relocation_e sgw_ue_check_if_relocated(mme_ue_t *mme_ue);
+
 void mme_ue_new_guti(mme_ue_t *mme_ue);
 void mme_ue_confirm_guti(mme_ue_t *mme_ue);
 
@@ -854,8 +861,6 @@ void mme_ebi_pool_clear(mme_ue_t *mme_ue);
 
 uint8_t mme_selected_int_algorithm(mme_ue_t *mme_ue);
 uint8_t mme_selected_enc_algorithm(mme_ue_t *mme_ue);
-
-mme_sgw_t *mme_changed_sgw_node(mme_sgw_t *current, enb_ue_t *enb_ue);
 
 #ifdef __cplusplus
 }

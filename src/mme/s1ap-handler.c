@@ -1727,6 +1727,8 @@ void s1ap_handle_path_switch_request(
     mme_ue_t *mme_ue = NULL;
     ogs_pkbuf_t *s1apbuf = NULL;
 
+    sgw_relocation_e relocation;
+
     ogs_assert(enb);
     ogs_assert(enb->sctp.sock);
 
@@ -1910,6 +1912,9 @@ void s1ap_handle_path_switch_request(
     /* Update Security Context (NextHop) */
     mme_ue->nhcc++;
     ogs_kdf_nh_enb(mme_ue->kasme, mme_ue->nh, mme_ue->nh);
+
+    relocation = sgw_ue_check_if_relocated(mme_ue);
+    ogs_fatal("sgw_ue = %d", relocation);
 
     for (i = 0; i < E_RABToBeSwitchedDLList->list.count; i++) {
         S1AP_E_RABToBeSwitchedDLItemIEs_t *item = NULL;
