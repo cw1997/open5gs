@@ -564,6 +564,8 @@ typedef struct mme_sess_s {
 
     uint8_t         pti;        /* Procedure Trasaction Identity */
 
+    uint32_t        pgw_s5c_teid;
+
     /* PDN Connectivity Request */
     ogs_nas_request_type_t request_type;
 
@@ -571,9 +573,9 @@ typedef struct mme_sess_s {
     ogs_list_t      bearer_list;
 
     /* Related Context */
-    mme_ue_t *mme_ue;
+    mme_ue_t        *mme_ue;
 
-    ogs_session_t *session;
+    ogs_session_t   *session;
 
     /* Save Protocol Configuration Options from UE */
     struct {

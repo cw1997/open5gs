@@ -116,6 +116,7 @@ ogs_pkbuf_t *mme_s11_build_create_session_request(
 
     memset(&pgw_s5c_teid, 0, sizeof(ogs_gtp2_f_teid_t));
     pgw_s5c_teid.interface_type = OGS_GTP2_F_TEID_S5_S8_PGW_GTP_C;
+    pgw_s5c_teid.teid = htobe32(sess->pgw_s5c_teid);
     if (session->smf_ip.ipv4 || session->smf_ip.ipv6) {
         pgw_s5c_teid.ipv4 = session->smf_ip.ipv4;
         pgw_s5c_teid.ipv6 = session->smf_ip.ipv6;

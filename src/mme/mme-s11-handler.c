@@ -84,6 +84,7 @@ void mme_s11_handle_create_session_response(
     uint8_t cause_value = 0;
     ogs_gtp2_cause_t *cause = NULL;
     ogs_gtp2_f_teid_t *sgw_s11_teid = NULL;
+    ogs_gtp2_f_teid_t *pgw_s5c_teid = NULL;
     ogs_gtp2_f_teid_t *sgw_s1u_teid = NULL;
 
     mme_bearer_t *bearer = NULL;
@@ -159,6 +160,10 @@ void mme_s11_handle_create_session_response(
 
     if (rsp->sender_f_teid_for_control_plane.presence == 0) {
         ogs_error("No S11 TEID");
+        cause_value = OGS_GTP2_CAUSE_CONDITIONAL_IE_MISSING;
+    }
+    if (rsp->pgw_s5_s8__s2a_s2b_f_teid_for_pmip_based_interface_or_for_gtp_based_control_plane_interface.presence == 0) {
+        ogs_error("No S5C TEID");
         cause_value = OGS_GTP2_CAUSE_CONDITIONAL_IE_MISSING;
     }
     if (rsp->bearer_contexts_created.s1_u_enodeb_f_teid.presence == 0) {
@@ -253,6 +258,10 @@ void mme_s11_handle_create_session_response(
     /* Control Plane(UL) : SGW-S11 */
     sgw_s11_teid = rsp->sender_f_teid_for_control_plane.data;
     sgw_ue->sgw_s11_teid = be32toh(sgw_s11_teid->teid);
+
+    /* Control Plane(UL) : PGW-S5C */
+    pgw_s5c_teid = rsp->pgw_s5_s8__s2a_s2b_f_teid_for_pmip_based_interface_or_for_gtp_based_control_plane_interface.data;
+    sess->pgw_s5c_teid = be32toh(pgw_s5c_teid->teid);
 
     memcpy(&session->paa, rsp->pdn_address_allocation.data,
             rsp->pdn_address_allocation.len);
