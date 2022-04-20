@@ -147,6 +147,8 @@ void sgwc_sxa_handle_session_establishment_response(
     ogs_gtp2_create_session_request_t *gtp_req = NULL;
     ogs_pkbuf_t *pkbuf = NULL;
 
+    ogs_gtp2_indication_t *indication = NULL;
+
     ogs_debug("Session Establishment Response");
 
     ogs_assert(pfcp_xact);
@@ -264,6 +266,12 @@ void sgwc_sxa_handle_session_establishment_response(
     ogs_assert(up_f_seid);
     sess->sgwu_sxa_seid = be64toh(up_f_seid->seid);
 
+    /* Check Indication */
+    if (gtp_req->indication_flags.presence &&
+        gtp_req->indication_flags.data && gtp_req->indication_flags.len) {
+        indication = gtp_req->indication_flags.data;
+    }
+
     /* Send Control Plane(DL) : SGW-S5C */
     memset(&sgw_s5c_teid, 0, sizeof(ogs_gtp2_f_teid_t));
     sgw_s5c_teid.interface_type = OGS_GTP2_F_TEID_S5_S8_SGW_GTP_C;
@@ -301,20 +309,26 @@ void sgwc_sxa_handle_session_establishment_response(
     /* Remove PGW-S5C */
     gtp_req->pgw_s5_s8_address_for_control_plane_or_pmip.presence = 0;
 
-    /* Data Plane(DL) : SGW-S5U */
-    memset(&sgw_s5u_teid, 0, sizeof(ogs_gtp2_f_teid_t));
-    sgw_s5u_teid.teid = htobe32(dl_tunnel->local_teid);
-    sgw_s5u_teid.interface_type = dl_tunnel->interface_type;
-    ogs_assert(dl_tunnel->local_addr || dl_tunnel->local_addr6);
-    rv = ogs_gtp2_sockaddr_to_f_teid(
-        dl_tunnel->local_addr, dl_tunnel->local_addr6, &sgw_s5u_teid, &len);
-    ogs_assert(rv == OGS_OK);
-    gtp_req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.presence = 1;
-    gtp_req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.data =
-        &sgw_s5u_teid;
-    gtp_req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.len = len;
+    if (indication && indication->operation_indication) {
+        ogs_fatal("OK...");
+        return;
+    } else {
+        /* Data Plane(DL) : SGW-S5U */
+        memset(&sgw_s5u_teid, 0, sizeof(ogs_gtp2_f_teid_t));
+        sgw_s5u_teid.teid = htobe32(dl_tunnel->local_teid);
+        sgw_s5u_teid.interface_type = dl_tunnel->interface_type;
+        ogs_assert(dl_tunnel->local_addr || dl_tunnel->local_addr6);
+        rv = ogs_gtp2_sockaddr_to_f_teid(
+            dl_tunnel->local_addr, dl_tunnel->local_addr6, &sgw_s5u_teid, &len);
+        ogs_assert(rv == OGS_OK);
+        gtp_req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.presence = 1;
+        gtp_req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.data =
+            &sgw_s5u_teid;
+        gtp_req->bearer_contexts_to_be_created.s5_s8_u_sgw_f_teid.len = len;
 
-    gtp_message->h.type = OGS_GTP2_CREATE_SESSION_REQUEST_TYPE;
+        gtp_message->h.type = OGS_GTP2_CREATE_SESSION_REQUEST_TYPE;
+    }
+
     gtp_message->h.teid = sess->pgw_s5c_teid;
 
     pkbuf = ogs_gtp2_build_msg(gtp_message);

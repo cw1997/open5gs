@@ -210,14 +210,14 @@ ogs_pkbuf_t *mme_s11_build_create_session_request(
     indication.change_reporting_support_indication = 1;
     indication.enb_change_reporting_support_indication = 1;
 
-    if (req->pdn_type.u8 == OGS_PDU_SESSION_TYPE_IPV4V6) {
+    if (req->pdn_type.u8 == OGS_PDU_SESSION_TYPE_IPV4V6)
 	    indication.dual_address_bearer_flag = 1;
-    }
 
-    if (sess->request_type.value == OGS_NAS_EPS_REQUEST_TYPE_HANDOVER) {
+    if (sess->request_type.value == OGS_NAS_EPS_REQUEST_TYPE_HANDOVER)
 	    indication.handover_indication = 1;
-	    req->indication_flags.presence = 1;
-    }
+
+    if (create_action == OGS_GTP_CREATE_IN_PATH_SWITCH_REQUEST)
+	    indication.operation_indication = 1;
 
     session->paa.session_type = req->pdn_type.u8;
     req->pdn_address_allocation.data = &session->paa;
