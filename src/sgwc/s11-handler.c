@@ -125,6 +125,7 @@ void sgwc_s11_handle_create_session_request(
 
     uint16_t decoded;
     ogs_gtp2_f_teid_t *mme_s11_teid = NULL;
+    ogs_gtp2_f_teid_t *pgw_s5c_teid = NULL;
     ogs_gtp2_uli_t uli;
     ogs_gtp2_bearer_qos_t bearer_qos;
     char apn[OGS_MAX_APN_LEN+1];
@@ -268,6 +269,11 @@ void sgwc_s11_handle_create_session_request(
     mme_s11_teid = req->sender_f_teid_for_control_plane.data;
     ogs_assert(mme_s11_teid);
     sgwc_ue->mme_s11_teid = be32toh(mme_s11_teid->teid);
+
+    /* Receive Control Plane(UL) : PGW-S5C */
+    pgw_s5c_teid = req->pgw_s5_s8_address_for_control_plane_or_pmip.data;
+    ogs_assert(pgw_s5c_teid);
+    sess->pgw_s5c_teid = be32toh(pgw_s5c_teid->teid);
 
     ogs_debug("    MME_S11_TEID[%d] SGW_S11_TEID[%d]",
         sgwc_ue->mme_s11_teid, sgwc_ue->sgw_s11_teid);
