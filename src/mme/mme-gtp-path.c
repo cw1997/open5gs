@@ -206,19 +206,15 @@ int mme_gtp_send_create_session_request(mme_sess_t *sess, int create_action)
     ogs_pkbuf_t *pkbuf = NULL;
     ogs_gtp_xact_t *xact = NULL;
     mme_ue_t *mme_ue = NULL;
-    sgw_ue_t *source_ue = NULL;
     sgw_ue_t *sgw_ue = NULL;
 
     mme_ue = sess->mme_ue;
     ogs_assert(mme_ue);
+    sgw_ue = sgw_ue_cycle(mme_ue->sgw_ue);
+    ogs_assert(sgw_ue);
 
     if (create_action == OGS_GTP_CREATE_IN_PATH_SWITCH_REQUEST) {
-        source_ue = sgw_ue_cycle(mme_ue->sgw_ue);
-        ogs_assert(source_ue);
-        sgw_ue = sgw_ue_cycle(source_ue->target_ue);
-        ogs_assert(sgw_ue);
-    } else {
-        sgw_ue = sgw_ue_cycle(mme_ue->sgw_ue);
+        sgw_ue = sgw_ue_cycle(sgw_ue->target_ue);
         ogs_assert(sgw_ue);
     }
 
@@ -226,7 +222,7 @@ int mme_gtp_send_create_session_request(mme_sess_t *sess, int create_action)
     h.type = OGS_GTP2_CREATE_SESSION_REQUEST_TYPE;
     h.teid = sgw_ue->sgw_s11_teid;
 
-    pkbuf = mme_s11_build_create_session_request(h.type, sess);
+    pkbuf = mme_s11_build_create_session_request(h.type, sess, create_action);
     ogs_expect_or_return_val(pkbuf, OGS_ERROR);
 
     xact = ogs_gtp_xact_local_create(sgw_ue->gnode, &h, pkbuf, timeout, sess);

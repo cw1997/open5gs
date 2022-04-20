@@ -312,11 +312,16 @@ void mme_s11_handle_create_session_response(
                 nas_eps_send_attach_accept(mme_ue));
         }
 
-    } else {
+    } else if (create_action == OGS_GTP_CREATE_IN_UPLINK_NAS_TRANSPORT) {
         ogs_assert(OGS_PDU_SESSION_TYPE_IS_VALID(session->paa.session_type));
         ogs_assert(OGS_OK ==
             nas_eps_send_activate_default_bearer_context_request(
                 bearer, create_action));
+    } else if (create_action == OGS_GTP_CREATE_IN_PATH_SWITCH_REQUEST) {
+        ogs_error("OK");
+    } else {
+        ogs_fatal("Invalid Create Session Action[%d]", create_action);
+        ogs_assert_if_reached();
     }
 }
 

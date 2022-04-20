@@ -22,7 +22,7 @@
 #include "mme-s11-build.h"
 
 ogs_pkbuf_t *mme_s11_build_create_session_request(
-        uint8_t type, mme_sess_t *sess)
+        uint8_t type, mme_sess_t *sess, int create_action)
 {
     int rv;
     ogs_session_t *session = NULL;
@@ -57,6 +57,11 @@ ogs_pkbuf_t *mme_s11_build_create_session_request(
     ogs_assert(mme_ue);
     sgw_ue = mme_ue->sgw_ue;
     ogs_assert(sgw_ue);
+
+    if (create_action == OGS_GTP_CREATE_IN_PATH_SWITCH_REQUEST) {
+        sgw_ue = sgw_ue_cycle(sgw_ue->target_ue);
+        ogs_assert(sgw_ue);
+    }
 
     ogs_debug("Create Session Request");
     ogs_debug("    MME_S11_TEID[%d] SGW_S11_TEID[%d]",
