@@ -1213,12 +1213,12 @@ void s1ap_handle_e_rab_setup_response(
                 ogs_debug("    Linked-EBI[%d]", linked_bearer->ebi);
 
                 if (bearer->ebi == linked_bearer->ebi) {
-                ogs_assert(OGS_OK ==
-                    mme_gtp_send_modify_bearer_request(bearer, 0));
+                    ogs_assert(OGS_OK ==
+                        mme_gtp_send_modify_bearer_request(bearer, 0));
                 } else {
-                ogs_assert(OGS_OK ==
-                    mme_gtp_send_create_bearer_response(
-                        bearer, OGS_GTP2_CAUSE_REQUEST_ACCEPTED));
+                    ogs_assert(OGS_OK ==
+                        mme_gtp_send_create_bearer_response(
+                            bearer, OGS_GTP2_CAUSE_REQUEST_ACCEPTED));
                 }
             }
         }
@@ -1692,8 +1692,7 @@ void s1ap_handle_e_rab_modification_indication(
         GTP_COUNTER_INCREMENT(
                 mme_ue, GTP_COUNTER_MODIFY_BEARER_BY_E_RAB_MODIFICATION);
 
-        ogs_assert(OGS_OK ==
-            mme_gtp_send_modify_bearer_request(bearer, 0));
+        ogs_assert(OGS_OK == mme_gtp_send_modify_bearer_request(bearer, 0));
     }
 }
 
@@ -1968,8 +1967,7 @@ void s1ap_handle_path_switch_request(
             GTP_COUNTER_INCREMENT(
                     mme_ue, GTP_COUNTER_MODIFY_BEARER_BY_PATH_SWITCH);
 
-            ogs_assert(OGS_OK ==
-                mme_gtp_send_modify_bearer_request(bearer, 1));
+            ogs_assert(OGS_OK == mme_gtp_send_modify_bearer_request(bearer, 1));
         }
     } else if (relocation == SGW_WITH_RELOCATION) {
         mme_sess_t *sess = NULL;
@@ -2939,8 +2937,7 @@ void s1ap_handle_handover_notification(
             memcpy(&bearer->enb_s1u_ip, &bearer->target_s1u_ip,
                     sizeof(ogs_ip_t));
 
-            ogs_assert(OGS_OK ==
-                mme_gtp_send_modify_bearer_request(bearer, 1));
+            ogs_assert(OGS_OK == mme_gtp_send_modify_bearer_request(bearer, 1));
         }
     }
 }
