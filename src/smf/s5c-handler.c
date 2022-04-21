@@ -212,16 +212,6 @@ uint8_t smf_s5c_handle_create_session_request(
         sess->ipv4 ? OGS_INET_NTOP(&sess->ipv4->addr, buf1) : "",
         sess->ipv6 ? OGS_INET6_NTOP(&sess->ipv6->addr, buf2) : "");
 
-    /* Remove all previous bearer */
-    smf_bearer_remove_all(sess);
-
-    /* Setup Default Bearer */
-    bearer = smf_bearer_add(sess);
-    ogs_assert(bearer);
-
-    /* Set Bearer EBI */
-    bearer->ebi = req->bearer_contexts_to_be_created.eps_bearer_id.u8;
-
     /* Control Plane(DL) : SGW-S5C */
     sgw_s5c_teid = req->sender_f_teid_for_control_plane.data;
     ogs_assert(sgw_s5c_teid);
@@ -231,6 +221,16 @@ uint8_t smf_s5c_handle_create_session_request(
 
     ogs_debug("    SGW_S5C_TEID[0x%x] SMF_N4_TEID[0x%x]",
             sess->sgw_s5c_teid, sess->smf_n4_teid);
+
+    /* Remove all previous bearer */
+    smf_bearer_remove_all(sess);
+
+    /* Setup Default Bearer */
+    bearer = smf_bearer_add(sess);
+    ogs_assert(bearer);
+
+    /* Set Bearer EBI */
+    bearer->ebi = req->bearer_contexts_to_be_created.eps_bearer_id.u8;
 
     switch (sess->gtp_rat_type) {
     case OGS_GTP2_RAT_TYPE_EUTRAN:
@@ -408,12 +408,46 @@ void smf_s5c_handle_modify_bearer_request(
     smf_ue = sess->smf_ue;
     ogs_assert(smf_ue);
 
-    ogs_debug("    SGW_S5C_TEID[0x%x] SMF_N4_TEID[0x%x]",
-            sess->sgw_s5c_teid, sess->smf_n4_teid);
+    /* Control Plane(DL) : SGW-S5C */
+    if (req->sender_f_teid_for_control_plane.presence == 1) {
+        ogs_gtp2_f_teid_t *sgw_s5c_teid =
+            req->sender_f_teid_for_control_plane.data;
+        ogs_assert(sgw_s5c_teid);
+        sess->sgw_s5c_teid = be32toh(sgw_s5c_teid->teid);
+        rv = ogs_gtp2_f_teid_to_ip(sgw_s5c_teid, &sess->sgw_s5c_ip);
+        ogs_assert(rv == OGS_OK);
 
-    /* TODO: Update remote GTP-U IP addr + TEID in the UPF through PFCP, similar
-     * to what is done in smf_gn_handle_update_pdp_context_request()
-     */
+        ogs_debug("    SGW_S5C_TEID[0x%x] SMF_N4_TEID[0x%x]",
+                sess->sgw_s5c_teid, sess->smf_n4_teid);
+    }
+
+#if 0 /* TODO */
+    switch (sess->gtp_rat_type) {
+    case OGS_GTP2_RAT_TYPE_EUTRAN:
+        sgw_s5u_teid = req->bearer_contexts_to_be_created.
+            s5_s8_u_sgw_f_teid.data;
+        ogs_assert(sgw_s5u_teid);
+        bearer->sgw_s5u_teid = be32toh(sgw_s5u_teid->teid);
+        rv = ogs_gtp2_f_teid_to_ip(sgw_s5u_teid, &bearer->sgw_s5u_ip);
+        ogs_assert(rv == OGS_OK);
+
+        break;
+    case OGS_GTP2_RAT_TYPE_WLAN:
+        sgw_s5u_teid = req->bearer_contexts_to_be_created.
+            s2b_u_epdg_f_teid_5.data;
+        ogs_assert(sgw_s5u_teid);
+        bearer->sgw_s5u_teid = be32toh(sgw_s5u_teid->teid);
+        rv = ogs_gtp2_f_teid_to_ip(sgw_s5u_teid, &bearer->sgw_s5u_ip);
+        ogs_assert(rv == OGS_OK);
+        break;
+    default:
+        ogs_error("Unknown RAT Type [%d]", sess->gtp_rat_type);
+        ogs_assert_if_reached();
+    }
+
+    ogs_debug("    SGW_S5U_TEID[0x%x] PGW_S5U_TEID[0x%x]",
+            bearer->sgw_s5u_teid, bearer->pgw_s5u_teid);
+#endif
 
     memset(&h, 0, sizeof(ogs_gtp2_header_t));
     h.type = OGS_GTP2_MODIFY_BEARER_RESPONSE_TYPE;
