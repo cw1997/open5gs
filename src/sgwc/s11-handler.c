@@ -319,21 +319,21 @@ void sgwc_s11_handle_modify_bearer_request(
         ogs_error("No Context");
         cause_value = OGS_GTP2_CAUSE_CONTEXT_NOT_FOUND;
     } else {
-        if (req->bearer_contexts_to_be_modified.presence == 0) {
+        if (req->bearer_contexts_to_be_modified[0].presence == 0) {
             ogs_error("No Bearer");
             cause_value = OGS_GTP2_CAUSE_MANDATORY_IE_MISSING;
         }
-        if (req->bearer_contexts_to_be_modified.eps_bearer_id.presence == 0) {
+        if (req->bearer_contexts_to_be_modified[0].eps_bearer_id.presence == 0) {
             ogs_error("No EPS Bearer ID");
             cause_value = OGS_GTP2_CAUSE_MANDATORY_IE_MISSING;
         }
 
         if (cause_value == OGS_GTP2_CAUSE_REQUEST_ACCEPTED) {
             bearer = sgwc_bearer_find_by_ue_ebi(sgwc_ue,
-                        req->bearer_contexts_to_be_modified.eps_bearer_id.u8);
+                        req->bearer_contexts_to_be_modified[0].eps_bearer_id.u8);
             if (!bearer) {
                 ogs_error("Unknown EPS Bearer ID[%d]",
-                        req->bearer_contexts_to_be_modified.eps_bearer_id.u8);
+                        req->bearer_contexts_to_be_modified[0].eps_bearer_id.u8);
                 cause_value = OGS_GTP2_CAUSE_CONTEXT_NOT_FOUND;
             }
         }
@@ -351,7 +351,7 @@ void sgwc_s11_handle_modify_bearer_request(
      *****************************************/
     ogs_assert(cause_value == OGS_GTP2_CAUSE_REQUEST_ACCEPTED);
 
-    if (req->bearer_contexts_to_be_modified.s1_u_enodeb_f_teid.presence == 0) {
+    if (req->bearer_contexts_to_be_modified[0].s1_u_enodeb_f_teid.presence == 0) {
         ogs_error("No eNB TEID");
         cause_value = OGS_GTP2_CAUSE_MANDATORY_IE_MISSING;
     }
@@ -374,7 +374,7 @@ void sgwc_s11_handle_modify_bearer_request(
     ogs_assert(dl_tunnel);
 
     /* Data Plane(DL) : eNB-S1U */
-    enb_s1u_teid = req->bearer_contexts_to_be_modified.s1_u_enodeb_f_teid.data;
+    enb_s1u_teid = req->bearer_contexts_to_be_modified[0].s1_u_enodeb_f_teid.data;
     dl_tunnel->remote_teid = be32toh(enb_s1u_teid->teid);
 
     rv = ogs_gtp2_f_teid_to_ip(enb_s1u_teid, &remote_ip);

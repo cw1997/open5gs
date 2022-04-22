@@ -341,9 +341,9 @@ ogs_pkbuf_t *mme_s11_build_modify_bearer_request(
     }
 
     /* Bearer Context : EBI */
-    req->bearer_contexts_to_be_modified.presence = 1;
-    req->bearer_contexts_to_be_modified.eps_bearer_id.presence = 1;
-    req->bearer_contexts_to_be_modified.eps_bearer_id.u8 = bearer->ebi;
+    req->bearer_contexts_to_be_modified[0].presence = 1;
+    req->bearer_contexts_to_be_modified[0].eps_bearer_id.presence = 1;
+    req->bearer_contexts_to_be_modified[0].eps_bearer_id.u8 = bearer->ebi;
 
     /* Data Plane(DL) : ENB-S1U */
     memset(&enb_s1u_teid, 0, sizeof(ogs_gtp2_f_teid_t));
@@ -351,9 +351,9 @@ ogs_pkbuf_t *mme_s11_build_modify_bearer_request(
     enb_s1u_teid.teid = htobe32(bearer->enb_s1u_teid);
     rv = ogs_gtp2_ip_to_f_teid(&bearer->enb_s1u_ip, &enb_s1u_teid, &len);
     ogs_expect_or_return_val(rv == OGS_OK, NULL);
-    req->bearer_contexts_to_be_modified.s1_u_enodeb_f_teid.presence = 1;
-    req->bearer_contexts_to_be_modified.s1_u_enodeb_f_teid.data = &enb_s1u_teid;
-    req->bearer_contexts_to_be_modified.s1_u_enodeb_f_teid.len = len;
+    req->bearer_contexts_to_be_modified[0].s1_u_enodeb_f_teid.presence = 1;
+    req->bearer_contexts_to_be_modified[0].s1_u_enodeb_f_teid.data = &enb_s1u_teid;
+    req->bearer_contexts_to_be_modified[0].s1_u_enodeb_f_teid.len = len;
 
     if (uli_presence) {
         /* User Location Information(ULI) */

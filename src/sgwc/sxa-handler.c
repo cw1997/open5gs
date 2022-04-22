@@ -341,18 +341,18 @@ void sgwc_sxa_handle_session_establishment_response(
             len = sgw_s5c_len;
 
         /* Bearer Context : EBI */
-        modify_bearer_request->bearer_contexts_to_be_modified.presence = 1;
-        modify_bearer_request->bearer_contexts_to_be_modified.
+        modify_bearer_request->bearer_contexts_to_be_modified[0].presence = 1;
+        modify_bearer_request->bearer_contexts_to_be_modified[0].
             eps_bearer_id.presence = 1;
-        modify_bearer_request->bearer_contexts_to_be_modified.
+        modify_bearer_request->bearer_contexts_to_be_modified[0].
             eps_bearer_id.u8 = bearer->ebi;
 
         /* Data Plane(DL) : SGW-S5U */
-        modify_bearer_request->bearer_contexts_to_be_modified.
+        modify_bearer_request->bearer_contexts_to_be_modified[0].
             s4_u_sgsn_f_teid.presence = 1;
-        modify_bearer_request->bearer_contexts_to_be_modified.
+        modify_bearer_request->bearer_contexts_to_be_modified[0].
             s4_u_sgsn_f_teid.data = &sgw_s5u_teid;
-        modify_bearer_request->bearer_contexts_to_be_modified.
+        modify_bearer_request->bearer_contexts_to_be_modified[0].
             s4_u_sgsn_f_teid.len = sgw_s5u_len;
 
         pkbuf = ogs_gtp2_build_msg(&send_message);
@@ -1031,22 +1031,22 @@ void sgwc_sxa_handle_session_modification_response(
          * both an IPv4 address and an IPv6 address
          * (see also subclause 8.22 "F-TEID").
          */
-                gtp_rsp->bearer_contexts_modified.presence = 1;
-                gtp_rsp->bearer_contexts_modified.eps_bearer_id.presence = 1;
-                gtp_rsp->bearer_contexts_modified.eps_bearer_id.u8 =
-                    gtp_req->bearer_contexts_to_be_modified.eps_bearer_id.u8;
-                gtp_rsp->bearer_contexts_modified.
+                gtp_rsp->bearer_contexts_modified[0].presence = 1;
+                gtp_rsp->bearer_contexts_modified[0].eps_bearer_id.presence = 1;
+                gtp_rsp->bearer_contexts_modified[0].eps_bearer_id.u8 =
+                    gtp_req->bearer_contexts_to_be_modified[0].eps_bearer_id.u8;
+                gtp_rsp->bearer_contexts_modified[0].
                         s1_u_enodeb_f_teid.presence = 1;
-                gtp_rsp->bearer_contexts_modified.s1_u_enodeb_f_teid.data =
-                    gtp_req->bearer_contexts_to_be_modified.
+                gtp_rsp->bearer_contexts_modified[0].s1_u_enodeb_f_teid.data =
+                    gtp_req->bearer_contexts_to_be_modified[0].
                         s1_u_enodeb_f_teid.data;
-                gtp_rsp->bearer_contexts_modified.s1_u_enodeb_f_teid.len =
-                    gtp_req->bearer_contexts_to_be_modified.
+                gtp_rsp->bearer_contexts_modified[0].s1_u_enodeb_f_teid.len =
+                    gtp_req->bearer_contexts_to_be_modified[0].
                         s1_u_enodeb_f_teid.len;
 
-                gtp_rsp->bearer_contexts_modified.cause.presence = 1;
-                gtp_rsp->bearer_contexts_modified.cause.len = sizeof(cause);
-                gtp_rsp->bearer_contexts_modified.cause.data = &cause;
+                gtp_rsp->bearer_contexts_modified[0].cause.presence = 1;
+                gtp_rsp->bearer_contexts_modified[0].cause.len = sizeof(cause);
+                gtp_rsp->bearer_contexts_modified[0].cause.data = &cause;
 
                 send_message.h.type = OGS_GTP2_MODIFY_BEARER_RESPONSE_TYPE;
                 send_message.h.teid = sgwc_ue->mme_s11_teid;
