@@ -109,6 +109,8 @@ typedef struct sgwc_sess_s {
 typedef struct sgwc_bearer_s {
     ogs_lnode_t     lnode;
 
+    ogs_lnode_t     to_build_node;
+
     uint8_t         ebi;
 
     ogs_list_t      tunnel_list;

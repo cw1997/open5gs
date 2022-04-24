@@ -114,6 +114,7 @@ typedef struct ogs_pfcp_xact_s {
     int             delete_trigger;
 
     ogs_list_t      pdr_to_create_list;
+    ogs_list_t      bearer_to_build_list;
 } ogs_pfcp_xact_t;
 
 int ogs_pfcp_xact_init(void);
