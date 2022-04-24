@@ -252,10 +252,10 @@ void smf_5gc_n4_handle_session_modification_response(
 
     OGS_LIST(pdr_to_create_list);
 
+    ogs_debug("Session Modification Response [5gc]");
+
     ogs_assert(xact);
     ogs_assert(rsp);
-
-    ogs_debug("Session Modification Response [5gc]");
 
     flags = xact->modify_flags;
     ogs_assert(flags);

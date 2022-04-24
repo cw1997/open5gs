@@ -120,7 +120,6 @@ int ogs_pfcp_xact_init(void);
 void ogs_pfcp_xact_final(void);
 
 ogs_pfcp_xact_t *ogs_pfcp_xact_local_create(ogs_pfcp_node_t *node,
-        ogs_pfcp_header_t *hdesc, ogs_pkbuf_t *pkbuf,
         void (*cb)(ogs_pfcp_xact_t *xact, void *data), void *data);
 ogs_pfcp_xact_t *ogs_pfcp_xact_cycle(ogs_pfcp_xact_t *xact);
 void ogs_pfcp_xact_delete_all(ogs_pfcp_node_t *node);

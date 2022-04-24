@@ -106,8 +106,7 @@ ogs_pkbuf_t *sgwc_sxa_build_session_establishment_request(
 }
 
 ogs_pkbuf_t *sgwc_sxa_build_sess_modification_request(
-        uint8_t type, sgwc_sess_t *sess, uint64_t modify_flags,
-        ogs_list_t *pdr_to_create_list)
+        uint8_t type, sgwc_sess_t *sess, ogs_pfcp_xact_t *xact)
 {
     ogs_pfcp_message_t pfcp_message;
     ogs_pfcp_session_modification_request_t *req = NULL;
@@ -123,8 +122,12 @@ ogs_pkbuf_t *sgwc_sxa_build_sess_modification_request(
     int num_of_create_far = 0;
     int num_of_update_far = 0;
 
+    uint64_t modify_flags = 0;
+
     ogs_debug("Session Modification Request");
     ogs_assert(sess);
+    ogs_assert(xact);
+    modify_flags = xact->modify_flags;
     ogs_assert(modify_flags);
 
     req = &pfcp_message.pfcp_session_modification_request;
@@ -189,8 +192,7 @@ ogs_pkbuf_t *sgwc_sxa_build_sess_modification_request(
                                     num_of_create_pdr, pdr);
                             num_of_create_pdr++;
 
-                            ogs_assert(pdr_to_create_list);
-                            ogs_list_add(pdr_to_create_list,
+                            ogs_list_add(&xact->pdr_to_create_list,
                                             &pdr->to_create_node);
                         } else
                             ogs_assert_if_reached();
@@ -233,8 +235,7 @@ ogs_pkbuf_t *sgwc_sxa_build_sess_modification_request(
 }
 
 ogs_pkbuf_t *sgwc_sxa_build_bearer_modification_request(
-        uint8_t type, sgwc_bearer_t *bearer, uint64_t modify_flags,
-        ogs_list_t *pdr_to_create_list)
+        uint8_t type, sgwc_bearer_t *bearer, ogs_pfcp_xact_t *xact)
 {
     ogs_pfcp_message_t pfcp_message;
     ogs_pfcp_session_modification_request_t *req = NULL;
@@ -248,12 +249,16 @@ ogs_pkbuf_t *sgwc_sxa_build_bearer_modification_request(
     int num_of_create_far = 0;
     int num_of_update_far = 0;
 
+    uint64_t modify_flags = 0;
+
     sgwc_sess_t *sess = NULL;
 
     ogs_debug("Session Modification Request");
     ogs_assert(bearer);
     sess = bearer->sess;
     ogs_assert(sess);
+    ogs_assert(xact);
+    modify_flags = xact->modify_flags;
     ogs_assert(modify_flags);
 
     req = &pfcp_message.pfcp_session_modification_request;
@@ -317,8 +322,8 @@ ogs_pkbuf_t *sgwc_sxa_build_bearer_modification_request(
                                 num_of_create_pdr, pdr);
                         num_of_create_pdr++;
 
-                        ogs_assert(pdr_to_create_list);
-                        ogs_list_add(pdr_to_create_list, &pdr->to_create_node);
+                        ogs_list_add(&xact->pdr_to_create_list,
+                                        &pdr->to_create_node);
                     } else
                         ogs_assert_if_reached();
 
