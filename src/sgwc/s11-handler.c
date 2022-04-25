@@ -1019,7 +1019,6 @@ void sgwc_s11_handle_release_access_bearers_request(
 
     ogs_list_for_each(&sgwc_ue->sess_list, sess) {
 
-        sess->state.release_access_bearers = false;
         ogs_assert(OGS_OK ==
             sgwc_pfcp_send_sess_modification_request(
                 sess, s11_xact, gtpbuf,
@@ -1212,7 +1211,6 @@ void sgwc_s11_handle_create_indirect_data_forwarding_tunnel_request(
 
     ogs_list_for_each(&sgwc_ue->sess_list, sess) {
 
-        sess->state.create_indirect_tunnel = false;
         ogs_assert(OGS_OK ==
             sgwc_pfcp_send_sess_modification_request(
                 sess, s11_xact, gtpbuf,
@@ -1259,7 +1257,6 @@ void sgwc_s11_handle_delete_indirect_data_forwarding_tunnel_request(
 
     ogs_list_for_each(&sgwc_ue->sess_list, sess) {
 
-        sess->state.delete_indirect_tunnel = false;
         ogs_assert(OGS_OK ==
             sgwc_pfcp_send_sess_modification_request(
                 sess, s11_xact, gtpbuf,

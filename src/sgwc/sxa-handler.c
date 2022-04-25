@@ -611,20 +611,14 @@ void sgwc_sxa_handle_session_modification_response(
      */
     if (flags & OGS_PFCP_MODIFY_REMOVE) {
         if (flags & OGS_PFCP_MODIFY_INDIRECT) {
-            bool delete_indirect_tunnel_is_done;
-
             s11_xact = pfcp_xact->assoc_xact;
             ogs_assert(s11_xact);
 
-            sess->state.delete_indirect_tunnel = true;
+            ogs_pfcp_xact_commit(pfcp_xact);
 
-            delete_indirect_tunnel_is_done = true;
-            ogs_list_for_each(&sgwc_ue->sess_list, sess) {
-                if (sess->state.delete_indirect_tunnel == false)
-                    delete_indirect_tunnel_is_done = false;
-            }
+            if (SESSION_SYNC_DONE(sgwc_ue,
+                OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE, flags)) {
 
-            if (delete_indirect_tunnel_is_done == true) {
                 sgwc_tunnel_t *tunnel = NULL, *next_tunnel = NULL;
                 ogs_gtp2_delete_indirect_data_forwarding_tunnel_response_t
                     *gtp_rsp = NULL;
@@ -673,6 +667,8 @@ void sgwc_sxa_handle_session_modification_response(
         } else {
             s5c_xact = pfcp_xact->assoc_xact;
 
+            ogs_pfcp_xact_commit(pfcp_xact);
+
             if (s5c_xact) {
                 ogs_assert(recv_message);
                 recv_message->h.type = OGS_GTP2_DELETE_BEARER_RESPONSE_TYPE;
@@ -698,6 +694,8 @@ void sgwc_sxa_handle_session_modification_response(
 
             s5c_xact = pfcp_xact->assoc_xact;
             ogs_assert(s5c_xact);
+
+            ogs_pfcp_xact_commit(pfcp_xact);
 
             ogs_assert(recv_message);
             gtp_req = &recv_message->create_bearer_request;
@@ -742,6 +740,8 @@ void sgwc_sxa_handle_session_modification_response(
 
             s5c_xact = pfcp_xact->assoc_xact;
             ogs_assert(s5c_xact);
+
+            ogs_pfcp_xact_commit(pfcp_xact);
 
             ogs_assert(recv_message);
             gtp_rsp = &recv_message->create_bearer_response;
@@ -790,20 +790,14 @@ void sgwc_sxa_handle_session_modification_response(
             ogs_expect(rv == OGS_OK);
 
         } else if (flags & OGS_PFCP_MODIFY_INDIRECT) {
-            bool create_indirect_tunnel_is_done;
-
             s11_xact = pfcp_xact->assoc_xact;
             ogs_assert(s11_xact);
 
-            sess->state.create_indirect_tunnel = true;
+            ogs_pfcp_xact_commit(pfcp_xact);
 
-            create_indirect_tunnel_is_done = true;
-            ogs_list_for_each(&sgwc_ue->sess_list, sess) {
-                if (sess->state.create_indirect_tunnel == false)
-                    create_indirect_tunnel_is_done = false;
-            }
+            if (SESSION_SYNC_DONE(sgwc_ue,
+                OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE, flags)) {
 
-            if (create_indirect_tunnel_is_done == true) {
                 sgwc_tunnel_t *tunnel = NULL;
 
                 ogs_gtp2_create_indirect_data_forwarding_tunnel_request_t
@@ -923,6 +917,8 @@ void sgwc_sxa_handle_session_modification_response(
         s11_xact = pfcp_xact->assoc_xact;
         ogs_assert(s11_xact);
 
+        ogs_pfcp_xact_commit(pfcp_xact);
+
         if (flags & OGS_PFCP_MODIFY_UL_ONLY) {
             ogs_gtp2_create_session_response_t *gtp_rsp = NULL;
             ogs_gtp2_f_teid_t sgw_s11_teid;
@@ -972,51 +968,53 @@ void sgwc_sxa_handle_session_modification_response(
             ogs_expect(rv == OGS_OK);
 
         } else if (flags & OGS_PFCP_MODIFY_DL_ONLY) {
-            ogs_gtp2_modify_bearer_request_t *gtp_req = NULL;
-            ogs_gtp2_modify_bearer_response_t *gtp_rsp = NULL;
+            if (SESSION_SYNC_DONE(sgwc_ue,
+                    OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE, flags)) {
+                ogs_gtp2_modify_bearer_request_t *gtp_req = NULL;
+                ogs_gtp2_modify_bearer_response_t *gtp_rsp = NULL;
 
-            ogs_gtp2_indication_t *indication = NULL;
+                ogs_gtp2_indication_t *indication = NULL;
 
-            ogs_assert(recv_message);
-            gtp_req = &recv_message->modify_bearer_request;
-            ogs_assert(gtp_req);
+                ogs_assert(recv_message);
+                gtp_req = &recv_message->modify_bearer_request;
+                ogs_assert(gtp_req);
 
-            if (gtp_req->indication_flags.presence &&
-                gtp_req->indication_flags.data &&
-                gtp_req->indication_flags.len) {
-                indication = gtp_req->indication_flags.data;
-            }
+                if (gtp_req->indication_flags.presence &&
+                    gtp_req->indication_flags.data &&
+                    gtp_req->indication_flags.len) {
+                    indication = gtp_req->indication_flags.data;
+                }
 
-            if (indication && indication->handover_indication) {
-                recv_message->h.type = OGS_GTP2_MODIFY_BEARER_REQUEST_TYPE;
-                recv_message->h.teid = sess->pgw_s5c_teid;
+                if (indication && indication->handover_indication) {
+                    recv_message->h.type = OGS_GTP2_MODIFY_BEARER_REQUEST_TYPE;
+                    recv_message->h.teid = sess->pgw_s5c_teid;
 
-                pkbuf = ogs_gtp2_build_msg(recv_message);
-                ogs_expect_or_return(pkbuf);
+                    pkbuf = ogs_gtp2_build_msg(recv_message);
+                    ogs_expect_or_return(pkbuf);
 
-                ogs_assert(sess->gnode);
-                s5c_xact = ogs_gtp_xact_local_create(
-                        sess->gnode, &recv_message->h, pkbuf,
-                        sess_timeout, sess);
-                ogs_expect_or_return(s5c_xact);
+                    ogs_assert(sess->gnode);
+                    s5c_xact = ogs_gtp_xact_local_create(
+                            sess->gnode, &recv_message->h, pkbuf,
+                            sess_timeout, sess);
+                    ogs_expect_or_return(s5c_xact);
 
-                ogs_gtp_xact_associate(s11_xact, s5c_xact);
+                    ogs_gtp_xact_associate(s11_xact, s5c_xact);
 
-                rv = ogs_gtp_xact_commit(s5c_xact);
-                ogs_expect(rv == OGS_OK);
+                    rv = ogs_gtp_xact_commit(s5c_xact);
+                    ogs_expect(rv == OGS_OK);
 
-            } else {
-                gtp_rsp = &send_message.modify_bearer_response;
-                ogs_assert(gtp_rsp);
+                } else {
+                    gtp_rsp = &send_message.modify_bearer_response;
+                    ogs_assert(gtp_rsp);
 
-                memset(&send_message, 0, sizeof(ogs_gtp2_message_t));
+                    memset(&send_message, 0, sizeof(ogs_gtp2_message_t));
 
-                memset(&cause, 0, sizeof(cause));
-                cause.value = OGS_GTP2_CAUSE_REQUEST_ACCEPTED;
+                    memset(&cause, 0, sizeof(cause));
+                    cause.value = OGS_GTP2_CAUSE_REQUEST_ACCEPTED;
 
-                gtp_rsp->cause.presence = 1;
-                gtp_rsp->cause.data = &cause;
-                gtp_rsp->cause.len = sizeof(cause);
+                    gtp_rsp->cause.presence = 1;
+                    gtp_rsp->cause.data = &cause;
+                    gtp_rsp->cause.len = sizeof(cause);
 
         /* Copy Bearer-Contexts-Modified from Modify-Bearer-Request
          *
@@ -1031,66 +1029,67 @@ void sgwc_sxa_handle_session_modification_response(
          * both an IPv4 address and an IPv6 address
          * (see also subclause 8.22 "F-TEID").
          */
-                gtp_rsp->bearer_contexts_modified[0].presence = 1;
-                gtp_rsp->bearer_contexts_modified[0].eps_bearer_id.presence = 1;
-                gtp_rsp->bearer_contexts_modified[0].eps_bearer_id.u8 =
-                    gtp_req->bearer_contexts_to_be_modified[0].eps_bearer_id.u8;
-                gtp_rsp->bearer_contexts_modified[0].
-                        s1_u_enodeb_f_teid.presence = 1;
-                gtp_rsp->bearer_contexts_modified[0].s1_u_enodeb_f_teid.data =
-                    gtp_req->bearer_contexts_to_be_modified[0].
-                        s1_u_enodeb_f_teid.data;
-                gtp_rsp->bearer_contexts_modified[0].s1_u_enodeb_f_teid.len =
-                    gtp_req->bearer_contexts_to_be_modified[0].
-                        s1_u_enodeb_f_teid.len;
+                    gtp_rsp->bearer_contexts_modified[0].presence = 1;
+                    gtp_rsp->bearer_contexts_modified[0].eps_bearer_id.presence = 1;
+                    gtp_rsp->bearer_contexts_modified[0].eps_bearer_id.u8 =
+                        gtp_req->bearer_contexts_to_be_modified[0].eps_bearer_id.u8;
+                    gtp_rsp->bearer_contexts_modified[0].
+                            s1_u_enodeb_f_teid.presence = 1;
+                    gtp_rsp->bearer_contexts_modified[0].s1_u_enodeb_f_teid.data =
+                        gtp_req->bearer_contexts_to_be_modified[0].
+                            s1_u_enodeb_f_teid.data;
+                    gtp_rsp->bearer_contexts_modified[0].s1_u_enodeb_f_teid.len =
+                        gtp_req->bearer_contexts_to_be_modified[0].
+                            s1_u_enodeb_f_teid.len;
 
-                gtp_rsp->bearer_contexts_modified[0].cause.presence = 1;
-                gtp_rsp->bearer_contexts_modified[0].cause.len = sizeof(cause);
-                gtp_rsp->bearer_contexts_modified[0].cause.data = &cause;
+                    gtp_rsp->bearer_contexts_modified[0].cause.presence = 1;
+                    gtp_rsp->bearer_contexts_modified[0].cause.len = sizeof(cause);
+                    gtp_rsp->bearer_contexts_modified[0].cause.data = &cause;
 
-                send_message.h.type = OGS_GTP2_MODIFY_BEARER_RESPONSE_TYPE;
-                send_message.h.teid = sgwc_ue->mme_s11_teid;
+                    send_message.h.type = OGS_GTP2_MODIFY_BEARER_RESPONSE_TYPE;
+                    send_message.h.teid = sgwc_ue->mme_s11_teid;
 
-                pkbuf = ogs_gtp2_build_msg(&send_message);
-                ogs_expect_or_return(pkbuf);
+                    pkbuf = ogs_gtp2_build_msg(&send_message);
+                    ogs_expect_or_return(pkbuf);
 
-                rv = ogs_gtp_xact_update_tx(s11_xact, &send_message.h, pkbuf);
-                ogs_expect_or_return(rv == OGS_OK);
+                    rv = ogs_gtp_xact_update_tx(s11_xact, &send_message.h, pkbuf);
+                    ogs_expect_or_return(rv == OGS_OK);
 
-                rv = ogs_gtp_xact_commit(s11_xact);
-                ogs_expect(rv == OGS_OK);
+                    rv = ogs_gtp_xact_commit(s11_xact);
+                    ogs_expect(rv == OGS_OK);
+                }
             }
 
         } else {
             ogs_fatal("Invalid modify_flags[0x%llx]", (long long)flags);
             ogs_assert_if_reached();
         }
+
     } else if (flags & OGS_PFCP_MODIFY_DEACTIVATE) {
-        bool release_access_bearers_is_done;
+        if (flags & OGS_PFCP_MODIFY_ERROR_INDICATION) {
+            /* It's faked method for receiving `bearer` context */
+            bearer = pfcp_xact->assoc_xact;
+            ogs_assert(bearer);
 
-        sess->state.release_access_bearers = true;
+            ogs_pfcp_xact_commit(pfcp_xact);
 
-        release_access_bearers_is_done = true;
-        ogs_list_for_each(&sgwc_ue->sess_list, sess) {
-            if (sess->state.release_access_bearers == false)
-                release_access_bearers_is_done = false;
-        }
-
-        if (release_access_bearers_is_done == true) {
-            if (flags & OGS_PFCP_MODIFY_ERROR_INDICATION) {
-                /* It's faked method for receiving `bearer` context */
-                bearer = pfcp_xact->assoc_xact;
-                ogs_assert(bearer);
-
+            if (SESSION_SYNC_DONE(sgwc_ue,
+                    OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE, flags)) {
                 ogs_assert(OGS_OK ==
                     sgwc_gtp_send_downlink_data_notification(
                         OGS_GTP2_CAUSE_ERROR_INDICATION_RECEIVED, bearer));
+            }
 
-            } else {
+        } else {
+            s11_xact = pfcp_xact->assoc_xact;
+            ogs_assert(s11_xact);
+
+            ogs_pfcp_xact_commit(pfcp_xact);
+
+            if (SESSION_SYNC_DONE(sgwc_ue,
+                    OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE, flags)) {
+
                 ogs_gtp2_release_access_bearers_response_t *gtp_rsp = NULL;
-
-                s11_xact = pfcp_xact->assoc_xact;
-                ogs_assert(s11_xact);
 
                 gtp_rsp = &send_message.release_access_bearers_response;
                 ogs_assert(gtp_rsp);
@@ -1122,8 +1121,6 @@ void sgwc_sxa_handle_session_modification_response(
         ogs_fatal("Invalid modify_flags[0x%llx]", (long long)flags);
         ogs_assert_if_reached();
     }
-
-    ogs_pfcp_xact_commit(pfcp_xact);
 }
 
 void sgwc_sxa_handle_session_deletion_response(
@@ -1325,8 +1322,6 @@ void sgwc_sxa_handle_session_report_request(
         if (!bearer) return;
 
         ogs_list_for_each(&sgwc_ue->sess_list, sess) {
-
-            sess->state.release_access_bearers = false;
 
             ogs_assert(OGS_OK ==
                 sgwc_pfcp_send_sess_modification_request(sess,
