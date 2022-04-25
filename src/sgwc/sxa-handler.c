@@ -616,6 +616,7 @@ void sgwc_sxa_handle_session_modification_response(
 
             ogs_pfcp_xact_commit(pfcp_xact);
 
+            ogs_assert(flags & OGS_PFCP_MODIFY_SESSION);
             if (SESSION_SYNC_DONE(sgwc_ue,
                 OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE, flags)) {
 
@@ -795,6 +796,7 @@ void sgwc_sxa_handle_session_modification_response(
 
             ogs_pfcp_xact_commit(pfcp_xact);
 
+            ogs_assert(flags & OGS_PFCP_MODIFY_SESSION);
             if (SESSION_SYNC_DONE(sgwc_ue,
                 OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE, flags)) {
 
@@ -968,6 +970,9 @@ void sgwc_sxa_handle_session_modification_response(
             ogs_expect(rv == OGS_OK);
 
         } else if (flags & OGS_PFCP_MODIFY_DL_ONLY) {
+#if 0 /* FIXME */
+            ogs_assert(flags & OGS_PFCP_MODIFY_SESSION);
+#endif
             if (SESSION_SYNC_DONE(sgwc_ue,
                     OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE, flags)) {
                 ogs_gtp2_modify_bearer_request_t *gtp_req = NULL;
@@ -1073,6 +1078,7 @@ void sgwc_sxa_handle_session_modification_response(
 
             ogs_pfcp_xact_commit(pfcp_xact);
 
+            ogs_assert(flags & OGS_PFCP_MODIFY_SESSION);
             if (SESSION_SYNC_DONE(sgwc_ue,
                     OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE, flags)) {
                 ogs_assert(OGS_OK ==
@@ -1086,6 +1092,7 @@ void sgwc_sxa_handle_session_modification_response(
 
             ogs_pfcp_xact_commit(pfcp_xact);
 
+            ogs_assert(flags & OGS_PFCP_MODIFY_SESSION);
             if (SESSION_SYNC_DONE(sgwc_ue,
                     OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE, flags)) {
 
