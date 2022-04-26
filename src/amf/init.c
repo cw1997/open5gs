@@ -23,6 +23,11 @@
 static ogs_thread_t *thread;
 static void amf_main(void *data);
 static int initialized = 0;
+int add(int a, int b);
+
+int add(int a, int b) {
+    return a + b;
+}
 
 int amf_initialize()
 {

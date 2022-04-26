@@ -20,9 +20,13 @@
 #include "ogs-sctp.h"
 #include "ogs-app.h"
 
+int add(int a, int b);
+
 int app_initialize(const char *const argv[])
 {
     int rv;
+
+    printf("1 + 2 = %d\n", add(1, 2));
 
     ogs_sctp_init(ogs_app()->usrsctp.udp_port);
     rv = amf_initialize();
